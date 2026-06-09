@@ -6,22 +6,34 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { session, useSession } from "../../hooks/useSession";
+import { useSession } from "../../hooks/useSession";
+import { useUpdateMe } from "../../hooks/api/users";
 
 export default function EditarPerfil() {
   const { user } = useSession();
+  const updateMe = useUpdateMe();
   const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
-  const [legajo] = useState(user?.legajo ?? "123456");
 
   if (!user) return null;
 
   const guardar = () => {
-    session.updateUser({ name, email, phone });
-    Alert.alert("Listo", "Cambios guardados.", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    updateMe.mutate(
+      { name, phone },
+      {
+        onSuccess: () => {
+          Alert.alert("Listo", "Cambios guardados.", [
+            { text: "OK", onPress: () => router.back() },
+          ]);
+        },
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo guardar el perfil",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -42,10 +54,9 @@ export default function EditarPerfil() {
         <Input label="Nombre y apellido" value={name} onChangeText={setName} />
         <Input
           label="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
+          value={user.email}
+          editable={false}
+          helperText="No puede modificarse"
         />
         <Input
           label="Teléfono"
@@ -55,12 +66,16 @@ export default function EditarPerfil() {
         />
         <Input
           label="Legajo"
-          value={legajo}
+          value={user.legajo ?? ""}
           editable={false}
           helperText="No puede modificarse"
         />
 
-        <Button title="Guardar cambios" onPress={guardar} />
+        <Button
+          title={updateMe.isPending ? "Guardando…" : "Guardar cambios"}
+          onPress={guardar}
+          disabled={updateMe.isPending}
+        />
       </ScrollView>
     </SafeAreaView>
   );

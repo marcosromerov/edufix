@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Incident } from "../data/types";
 import { StatusPill, NuevaPill } from "./ui/Pills";
+import { timeAgo } from "../lib/time";
 
 interface Props {
   incident: Incident;
@@ -21,7 +22,7 @@ export function IncidentCard({ incident, showId = false, compact = false }: Prop
       <View className="flex-row items-start justify-between mb-1.5">
         <View className="flex-1 pr-2">
           {showId ? (
-            <Text className="text-text-dim text-xs mb-0.5">#{incident.id}</Text>
+            <Text className="text-text-dim text-xs mb-0.5">#{incident.code}</Text>
           ) : null}
           <Text className="text-text font-semibold text-[15px]" numberOfLines={1}>
             {incident.title}
@@ -38,7 +39,7 @@ export function IncidentCard({ incident, showId = false, compact = false }: Prop
         <Text className="text-text-muted text-xs flex-1" numberOfLines={1}>
           {incident.location}
           {incident.building ? ` · ${incident.building}` : ""}
-          {compact ? "" : ` · ${incident.reportedAt}`}
+          {compact ? "" : ` · ${timeAgo(incident.createdAt)}`}
         </Text>
       </View>
     </Pressable>

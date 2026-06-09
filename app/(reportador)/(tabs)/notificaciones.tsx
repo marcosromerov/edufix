@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Logo } from "../../../components/ui/Logo";
 import { SegmentedTabs } from "../../../components/ui/SegmentedTabs";
 import { Card } from "../../../components/ui/Card";
-import { notifications } from "../../../data/extras";
+import {
+  useNotifications,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+} from "../../../hooks/api/notifications";
+import { LoadingView, EmptyView } from "../../../components/ui/StateViews";
 
 const tabs = [
   { key: "todas", label: "Todas" },
   { key: "no_leidas", label: "No leídas" },
-  { key: "en_gestion", label: "En gestión" },
 ];
 
 const iconForType = (t: string) =>
@@ -21,10 +25,14 @@ const colorForType = (t: string) =>
 
 export default function Notificaciones() {
   const [filter, setFilter] = useState("todas");
+  const { data: notifications, isLoading } = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+
   const list =
     filter === "no_leidas"
-      ? notifications.filter((n) => !n.read)
-      : notifications;
+      ? notifications?.filter((n) => !n.read) ?? []
+      : notifications ?? [];
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -35,24 +43,34 @@ export default function Notificaciones() {
       <View className="px-4 pb-3">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-text text-xl font-bold">Notificaciones</Text>
-          <Text className="text-accent text-xs">Todas</Text>
+          <Pressable onPress={() => markAllRead.mutate()}>
+            <Text className="text-accent text-xs">Marcar todas</Text>
+          </Pressable>
         </View>
         <SegmentedTabs tabs={tabs} value={filter} onChange={setFilter} />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 100 }}>
-        {list.map((n) => (
-          <Card key={n.id} className="flex-row gap-3 items-start">
-            <View className="mt-0.5">
-              <Ionicons name={iconForType(n.type) as any} size={22} color={colorForType(n.type)} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-text font-medium">{n.text}</Text>
-              <Text className="text-text-muted text-xs mt-0.5">{n.meta}</Text>
-            </View>
-            {!n.read ? <View className="w-2 h-2 rounded-full bg-accent mt-2" /> : null}
-          </Card>
-        ))}
+        {isLoading ? (
+          <LoadingView />
+        ) : list.length === 0 ? (
+          <EmptyView title="Sin notificaciones" />
+        ) : (
+          list.map((n) => (
+            <Pressable key={n.id} onPress={() => !n.read && markRead.mutate(n.id)}>
+              <Card className="flex-row gap-3 items-start">
+                <View className="mt-0.5">
+                  <Ionicons name={iconForType(n.type) as any} size={22} color={colorForType(n.type)} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-text font-medium">{n.text}</Text>
+                  <Text className="text-text-muted text-xs mt-0.5">{n.meta}</Text>
+                </View>
+                {!n.read ? <View className="w-2 h-2 rounded-full bg-accent mt-2" /> : null}
+              </Card>
+            </Pressable>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );

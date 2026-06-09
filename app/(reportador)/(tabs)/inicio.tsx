@@ -5,15 +5,17 @@ import { Logo } from "../../../components/ui/Logo";
 import { Button } from "../../../components/ui/Button";
 import { IncidentCard } from "../../../components/IncidentCard";
 import { useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { LoadingView, EmptyView } from "../../../components/ui/StateViews";
 
 export default function Inicio() {
   const { user } = useSession();
   const router = useRouter();
-  const mine = incidents.filter((i) => i.reporterId === user?.id);
-  const active = mine.filter((i) => i.status !== "finalizado").length;
-  const resolved = mine.filter((i) => i.status === "finalizado").length;
-  const top = mine.slice(0, 3);
+  const { data: mine, isLoading } = useIncidents({ scope: "mine" });
+
+  const active = mine?.filter((i) => i.status !== "finalizado").length ?? 0;
+  const resolved = mine?.filter((i) => i.status === "finalizado").length ?? 0;
+  const top = mine?.slice(0, 3) ?? [];
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -38,11 +40,20 @@ export default function Inicio() {
           </Link>
         </View>
 
-        <View className="gap-3">
-          {top.map((i) => (
-            <IncidentCard key={i.id} incident={i} />
-          ))}
-        </View>
+        {isLoading ? (
+          <LoadingView />
+        ) : top.length === 0 ? (
+          <EmptyView
+            title="Sin incidencias aún"
+            subtitle="Reportá la primera con el botón de abajo"
+          />
+        ) : (
+          <View className="gap-3">
+            {top.map((i) => (
+              <IncidentCard key={i.id} incident={i} />
+            ))}
+          </View>
+        )}
 
         <View className="mt-6">
           <Button

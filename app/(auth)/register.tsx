@@ -1,21 +1,62 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Logo } from "../../components/ui/Logo";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
+import { session } from "../../hooks/useSession";
+import { Role } from "../../data/types";
+
+const roleOptions: { value: Role; label: string }[] = [
+  { value: "reportador", label: "Reportador (alumno/docente)" },
+  { value: "jefe", label: "Jefe de departamento" },
+  { value: "operario", label: "Operario" },
+];
 
 export default function Register() {
+  const [name, setName] = useState("");
   const [legajo, setLegajo] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<Role>("reportador");
+  const [loading, setLoading] = useState(false);
+
+  const onSubmit = async () => {
+    if (!name || !email || !password) {
+      Alert.alert("Faltan datos", "Nombre, email y contraseña son obligatorios");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Contraseña muy corta", "Mínimo 6 caracteres");
+      return;
+    }
+    setLoading(true);
+    try {
+      await session.register({
+        name,
+        email: email.trim(),
+        password,
+        role,
+        legajo: legajo || undefined,
+      });
+      router.replace("/");
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.error ?? "No se pudo crear la cuenta";
+      Alert.alert("Error", msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
       <ScreenHeader title="Crear cuenta" />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, flexGrow: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, flexGrow: 1 }}
+      >
         <View className="items-center mt-2 mb-8">
           <Logo size="md" />
         </View>
@@ -26,7 +67,13 @@ export default function Register() {
 
         <View className="gap-4">
           <Input
-            label="Número de legajo"
+            label="Nombre completo"
+            placeholder="Ej: Marcos Romero"
+            value={name}
+            onChangeText={setName}
+          />
+          <Input
+            label="Número de legajo (opcional)"
             placeholder="Ej: 123456"
             value={legajo}
             onChangeText={setLegajo}
@@ -42,18 +89,40 @@ export default function Register() {
           />
           <Input
             label="Contraseña"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mínimo 6 caracteres"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
+
+          <View className="gap-2">
+            <Text className="text-text-muted text-sm font-medium">Tipo de cuenta</Text>
+            {roleOptions.map((r) => {
+              const active = role === r.value;
+              return (
+                <Pressable
+                  key={r.value}
+                  onPress={() => setRole(r.value)}
+                  className={`rounded-xl px-4 py-3 border ${
+                    active ? "border-accent bg-accent/10" : "border-border bg-bg-card"
+                  }`}
+                >
+                  <Text className="text-text font-semibold">{r.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         <View className="flex-1" />
 
         <View className="gap-3 mt-8">
-          <Button title="Crear cuenta" onPress={() => router.replace("/(auth)/login")} />
-          <Pressable onPress={() => router.back()}>
+          <Button
+            title={loading ? "Creando…" : "Crear cuenta"}
+            onPress={onSubmit}
+            disabled={loading}
+          />
+          <Pressable onPress={() => router.back()} disabled={loading}>
             <Text className="text-center text-text-muted text-sm">
               Ya tenés cuenta?{" "}
               <Text className="text-accent font-semibold">Ingresar</Text>

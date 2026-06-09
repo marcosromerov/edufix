@@ -4,8 +4,6 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../../components/ui/ScreenHeader";
 import { Button } from "../../../components/ui/Button";
-import { Card } from "../../../components/ui/Card";
-import { recentScans } from "../../../data/extras";
 
 export default function Escanear() {
   return (
@@ -22,7 +20,6 @@ export default function Escanear() {
         {/* Marco de escaneo */}
         <View className="items-center justify-center my-3">
           <View className="w-64 h-64 bg-bg-card rounded-2xl border border-border/60 items-center justify-center overflow-hidden">
-            {/* esquinas */}
             <View className="absolute top-4 left-4 w-8 h-8 border-l-4 border-t-4 border-accent rounded-tl-lg" />
             <View className="absolute top-4 right-4 w-8 h-8 border-r-4 border-t-4 border-accent rounded-tr-lg" />
             <View className="absolute bottom-4 left-4 w-8 h-8 border-l-4 border-b-4 border-accent rounded-bl-lg" />
@@ -39,14 +36,9 @@ export default function Escanear() {
 
         <View>
           <Text className="text-text-muted text-sm mb-3">Escaneos recientes</Text>
-          <View className="gap-2">
-            {recentScans.map((s) => (
-              <Card key={s.id}>
-                <Text className="text-text font-medium">{s.location}</Text>
-                <Text className="text-text-muted text-xs mt-0.5">{s.detail}</Text>
-              </Card>
-            ))}
-          </View>
+          <Text className="text-text-dim text-xs">
+            Sin escaneos recientes
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

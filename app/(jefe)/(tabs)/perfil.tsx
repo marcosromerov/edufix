@@ -5,8 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Logo } from "../../../components/ui/Logo";
 import { Button } from "../../../components/ui/Button";
 import { session, useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
-import { teamMembers } from "../../../data/extras";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { useTeam } from "../../../hooks/api/users";
 
 function RowItem({
   icon,
@@ -33,12 +33,16 @@ function RowItem({
 
 export default function PerfilJefe() {
   const { user } = useSession();
+  const { data: incidents = [] } = useIncidents({ scope: "all" });
+  const { data: team = [] } = useTeam();
   if (!user) return null;
 
-  const dept = incidents.filter((i) => i.department === user.department);
+  const dept = user.department
+    ? incidents.filter((i) => i.department === user.department)
+    : incidents;
   const informes = dept.length;
   const enProceso = dept.filter((i) => i.status === "en_proceso").length;
-  const operarios = teamMembers.length;
+  const operarios = team.length;
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -86,8 +90,8 @@ export default function PerfilJefe() {
           title="Cerrar sesión"
           variant="danger"
           icon="log-out-outline"
-          onPress={() => {
-            session.logout();
+          onPress={async () => {
+            await session.logout();
             router.replace("/(auth)/login");
           }}
         />

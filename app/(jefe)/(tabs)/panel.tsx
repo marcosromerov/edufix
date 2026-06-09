@@ -3,7 +3,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 import { Logo } from "../../../components/ui/Logo";
 import { IncidentCard } from "../../../components/IncidentCard";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { LoadingView } from "../../../components/ui/StateViews";
 
 export default function Panel() {
   const today = new Date().toLocaleDateString("es-AR", {
@@ -11,10 +12,11 @@ export default function Panel() {
     day: "numeric",
     month: "long",
   });
+
+  const { data: incidents = [], isLoading } = useIncidents({ scope: "all" });
   const nuevas = incidents.filter((i) => i.isNew).length;
   const enProceso = incidents.filter((i) => i.status === "en_proceso").length;
   const resueltas = incidents.filter((i) => i.status === "finalizado").length;
-
   const pendientes = incidents.filter((i) => i.isNew);
 
   return (
@@ -51,11 +53,15 @@ export default function Panel() {
           </Link>
         </View>
 
-        <View className="gap-3">
-          {pendientes.map((i) => (
-            <IncidentCard key={i.id} incident={i} showId />
-          ))}
-        </View>
+        {isLoading ? (
+          <LoadingView />
+        ) : (
+          <View className="gap-3">
+            {pendientes.map((i) => (
+              <IncidentCard key={i.id} incident={i} showId />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

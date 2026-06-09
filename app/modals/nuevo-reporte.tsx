@@ -6,8 +6,32 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { useCreateIncident } from "../../hooks/api/incidents";
+import {
+  DepartmentKey,
+  IncidentPriority,
+  IncidentType,
+} from "../../data/types";
 
-const departamentos = ["Mantenimiento", "IT", "Seguridad"];
+const departamentos: { value: DepartmentKey; label: string }[] = [
+  { value: "mantenimiento", label: "Mantenimiento" },
+  { value: "it", label: "IT" },
+  { value: "seguridad", label: "Seguridad" },
+];
+
+const tipos: { value: IncidentType; label: string }[] = [
+  { value: "correctivo", label: "Correctivo" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+  { value: "preventivo", label: "Preventivo" },
+];
+
+const prioridades: { value: IncidentPriority; label: string }[] = [
+  { value: "baja", label: "Baja" },
+  { value: "media", label: "Media" },
+  { value: "alta", label: "Alta" },
+  { value: "critica", label: "Crítica" },
+];
+
 const ubicaciones = [
   "Piso 5 · UADE Labs · Aula 503",
   "Piso 6 · UADE Labs · Aula 665",
@@ -38,15 +62,38 @@ function Chip({
 }
 
 export default function NuevoReporte() {
-  const [asunto, setAsunto] = useState("Ej: Falla eléctrica aula 402");
-  const [ubicacion, setUbicacion] = useState(ubicaciones[0]);
-  const [depto, setDepto] = useState("Mantenimiento");
-  const [descripcion, setDescripcion] = useState("");
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState<string>(ubicaciones[0]!);
+  const [department, setDepartment] = useState<DepartmentKey>("mantenimiento");
+  const [type, setType] = useState<IncidentType>("correctivo");
+  const [priority, setPriority] = useState<IncidentPriority>("media");
+  const [description, setDescription] = useState("");
+
+  const create = useCreateIncident();
 
   const enviar = () => {
-    Alert.alert("Reporte enviado", "Tu reporte fue registrado con éxito.", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    if (!title.trim() || !description.trim()) {
+      Alert.alert("Faltan datos", "Asunto y descripción son obligatorios");
+      return;
+    }
+    create.mutate(
+      { title, location, department, type, priority, description },
+      {
+        onSuccess: (inc) => {
+          Alert.alert(
+            "Reporte enviado",
+            `Se creó la incidencia ${inc.code}`,
+            [{ text: "OK", onPress: () => router.back() }],
+          );
+        },
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo crear el reporte",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -54,22 +101,11 @@ export default function NuevoReporte() {
       <ScreenHeader title="Nuevo reporte" />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 18 }}>
-        <View className="bg-status-progress/10 border border-status-progress/30 rounded-xl p-3 flex-row items-center gap-2">
-          <Ionicons name="qr-code" size={18} color="#22D3EE" />
-          <View>
-            <Text className="text-text text-xs font-medium">
-              Ubicación cargada por QR
-            </Text>
-            <Text className="text-text-muted text-xs">
-              UADE-6-665 · Piso 6 · Aula 665
-            </Text>
-          </View>
-        </View>
-
         <Input
           label="Asunto"
-          value={asunto}
-          onChangeText={setAsunto}
+          placeholder="Ej: Falla eléctrica aula 402"
+          value={title}
+          onChangeText={setTitle}
         />
 
         <View className="gap-2">
@@ -78,9 +114,9 @@ export default function NuevoReporte() {
             {ubicaciones.map((u) => (
               <Chip
                 key={u}
-                label={u.split(" · ").slice(-1)[0]}
-                active={u === ubicacion}
-                onPress={() => setUbicacion(u)}
+                label={u.split(" · ").slice(-1)[0]!}
+                active={u === location}
+                onPress={() => setLocation(u)}
               />
             ))}
           </View>
@@ -93,10 +129,38 @@ export default function NuevoReporte() {
           <View className="flex-row gap-2">
             {departamentos.map((d) => (
               <Chip
-                key={d}
-                label={d}
-                active={d === depto}
-                onPress={() => setDepto(d)}
+                key={d.value}
+                label={d.label}
+                active={d.value === department}
+                onPress={() => setDepartment(d.value)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-text-muted text-sm font-medium">Tipo</Text>
+          <View className="flex-row gap-2">
+            {tipos.map((t) => (
+              <Chip
+                key={t.value}
+                label={t.label}
+                active={t.value === type}
+                onPress={() => setType(t.value)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-text-muted text-sm font-medium">Prioridad</Text>
+          <View className="flex-row gap-2">
+            {prioridades.map((p) => (
+              <Chip
+                key={p.value}
+                label={p.label}
+                active={p.value === priority}
+                onPress={() => setPriority(p.value)}
               />
             ))}
           </View>
@@ -105,8 +169,8 @@ export default function NuevoReporte() {
         <Input
           label="Descripción"
           placeholder="Contá qué pasó…"
-          value={descripcion}
-          onChangeText={setDescripcion}
+          value={description}
+          onChangeText={setDescription}
           multiline
           numberOfLines={4}
           style={{ minHeight: 90, textAlignVertical: "top" }}
@@ -119,7 +183,12 @@ export default function NuevoReporte() {
           </Text>
         </Pressable>
 
-        <Button title="Enviar reporte" icon="send-outline" onPress={enviar} />
+        <Button
+          title={create.isPending ? "Enviando…" : "Enviar reporte"}
+          icon="send-outline"
+          onPress={enviar}
+          disabled={create.isPending}
+        />
       </ScrollView>
     </SafeAreaView>
   );

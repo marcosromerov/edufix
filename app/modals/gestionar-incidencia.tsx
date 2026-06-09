@@ -7,8 +7,9 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
-import { findIncident } from "../../data/incidents";
-import { IncidentPriority, DepartmentKey } from "../../data/types";
+import { LoadingView } from "../../components/ui/StateViews";
+import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
+import { IncidentPriority } from "../../data/types";
 
 function Chip({
   label,
@@ -46,40 +47,61 @@ const priorities: { key: IncidentPriority; label: string }[] = [
   { key: "baja", label: "Baja" },
   { key: "media", label: "Media" },
   { key: "alta", label: "Alta" },
-];
-
-const departamentos: { key: DepartmentKey; label: string }[] = [
-  { key: "mantenimiento", label: "Mantenimiento" },
-  { key: "it", label: "IT" },
-  { key: "seguridad", label: "Seguridad" },
+  { key: "critica", label: "Crítica" },
 ];
 
 export default function GestionarIncidencia() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const incident = findIncident(id);
+  const { data: incident, isLoading } = useIncident(id);
+  const update = useUpdateIncident();
 
-  const [priority, setPriority] = useState<IncidentPriority>(
-    incident?.priority ?? "media",
-  );
-  const [depto, setDepto] = useState<DepartmentKey>(
-    incident?.department ?? "mantenimiento",
-  );
-  const [assigneeText, setAssigneeText] = useState("");
+  const [priority, setPriority] = useState<IncidentPriority | null>(null);
   const [rechazando, setRechazando] = useState(false);
   const [motivoRechazo, setMotivoRechazo] = useState("");
 
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
+        <ScreenHeader title="Gestionar incidencia" />
+        <LoadingView />
+      </SafeAreaView>
+    );
+  }
   if (!incident) return null;
 
+  const currentPriority = priority ?? incident.priority;
+
   const guardar = () => {
-    Alert.alert("Cambios guardados", "", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    if (priority === null || priority === incident.priority) {
+      router.back();
+      return;
+    }
+    update.mutate(
+      { id: incident.id, payload: { priority } },
+      {
+        onSuccess: () => {
+          Alert.alert("Cambios guardados", "", [
+            { text: "OK", onPress: () => router.back() },
+          ]);
+        },
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo guardar",
+          );
+        },
+      },
+    );
   };
 
   const rechazar = () => {
-    Alert.alert("Incidencia rechazada", "", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    // Backend no soporta "rechazo" formal todavia.
+    // Por ahora cerramos el modal y avisamos.
+    Alert.alert(
+      "Incidencia rechazada",
+      "(Funcionalidad de rechazo formal pendiente de implementar en backend)",
+      [{ text: "OK", onPress: () => router.back() }],
+    );
   };
 
   return (
@@ -90,7 +112,7 @@ export default function GestionarIncidencia() {
         <View>
           <View className="flex-row items-center gap-2 mb-1.5">
             <StatusPill status={incident.status} />
-            <PriorityPill priority={priority} />
+            <PriorityPill priority={currentPriority} />
           </View>
           <Text className="text-text text-lg font-bold">{incident.title}</Text>
           <Text className="text-text-muted text-xs mt-0.5">
@@ -119,37 +141,18 @@ export default function GestionarIncidencia() {
                   <Chip
                     key={p.key}
                     label={p.label}
-                    active={priority === p.key}
+                    active={currentPriority === p.key}
                     onPress={() => setPriority(p.key)}
                   />
                 ))}
               </View>
             </View>
 
-            <View className="gap-2">
-              <Text className="text-text-muted text-sm font-medium">
-                Departamento
-              </Text>
-              <View className="flex-row gap-2">
-                {departamentos.map((d) => (
-                  <Chip
-                    key={d.key}
-                    label={d.label}
-                    active={depto === d.key}
-                    onPress={() => setDepto(d.key)}
-                  />
-                ))}
-              </View>
-            </View>
-
-            <Input
-              label="Asignar operario"
-              placeholder="Buscar por nombre o rol"
-              value={assigneeText}
-              onChangeText={setAssigneeText}
+            <Button
+              title={update.isPending ? "Guardando…" : "Guardar cambios"}
+              onPress={guardar}
+              disabled={update.isPending}
             />
-
-            <Button title="Guardar cambios" onPress={guardar} />
           </>
         ) : (
           <>
@@ -165,22 +168,6 @@ export default function GestionarIncidencia() {
                 numberOfLines={4}
                 style={{ minHeight: 90, textAlignVertical: "top" }}
               />
-            </View>
-
-            <View className="gap-2">
-              <Text className="text-text-muted text-sm font-medium">
-                Asignar a otro departamento
-              </Text>
-              <View className="flex-row gap-2">
-                {departamentos.map((d) => (
-                  <Chip
-                    key={d.key}
-                    label={d.label}
-                    active={depto === d.key}
-                    onPress={() => setDepto(d.key)}
-                  />
-                ))}
-              </View>
             </View>
 
             <Button title="Confirmar rechazo" variant="danger" onPress={rechazar} />

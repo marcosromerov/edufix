@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Logo } from "../../../components/ui/Logo";
 import { Button } from "../../../components/ui/Button";
 import { session, useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
 
 function RowItem({
   icon,
@@ -32,9 +32,9 @@ function RowItem({
 
 export default function PerfilOperario() {
   const { user } = useSession();
+  const { data: mine = [] } = useIncidents({ scope: "assigned" });
   if (!user) return null;
 
-  const mine = incidents.filter((i) => i.assigneeId === user.id);
   const asignadas = mine.length;
   const enProceso = mine.filter((i) => i.status === "en_proceso").length;
   const resueltas = mine.filter((i) => i.status === "finalizado").length;
@@ -83,8 +83,8 @@ export default function PerfilOperario() {
           title="Cerrar sesión"
           variant="danger"
           icon="log-out-outline"
-          onPress={() => {
-            session.logout();
+          onPress={async () => {
+            await session.logout();
             router.replace("/(auth)/login");
           }}
         />

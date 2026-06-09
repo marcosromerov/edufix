@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { View, Text, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -8,10 +7,11 @@ import { Button } from "../../components/ui/Button";
 import { InfoRow } from "../../components/ui/InfoRow";
 import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
+import { LoadingView } from "../../components/ui/StateViews";
 import { useSession } from "../../hooks/useSession";
-import { findIncident } from "../../data/incidents";
-import { findUserById } from "../../data/users";
+import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
 import { IncidentStatus } from "../../data/types";
+import { timeAgo } from "../../lib/time";
 
 const labelType = {
   mantenimiento: "Mantenimiento",
@@ -40,12 +40,17 @@ const nextStatusLabel: Record<IncidentStatus, string> = {
 export default function IncidenciaDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useSession();
-  const incident = findIncident(id);
+  const { data: incident, isLoading } = useIncident(id);
+  const update = useUpdateIncident();
 
-  // Estado local para simular avance (mocks no persisten)
-  const [status, setStatus] = useState<IncidentStatus>(
-    incident?.status ?? "abierto",
-  );
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
+        <ScreenHeader title="Incidencia" />
+        <LoadingView />
+      </SafeAreaView>
+    );
+  }
 
   if (!incident || !user) {
     return (
@@ -58,26 +63,35 @@ export default function IncidenciaDetail() {
     );
   }
 
-  const assignee = incident.assigneeId ? findUserById(incident.assigneeId) : null;
-
   const isOperarioAssigned =
     user.role === "operario" && incident.assigneeId === user.id;
   const isJefe = user.role === "jefe";
   const isReportador = user.role === "reportador";
 
   const advance = () => {
-    const next = nextStatus[status];
-    if (next) setStatus(next);
+    const next = nextStatus[incident.status];
+    if (!next) return;
+    update.mutate(
+      { id: incident.id, payload: { status: next } },
+      {
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo actualizar la incidencia",
+          );
+        },
+      },
+    );
   };
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-      <ScreenHeader title={`#${incident.id}`} />
+      <ScreenHeader title={`#${incident.code}`} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}>
         <View>
           <View className="flex-row items-center gap-2 mb-1.5">
-            <StatusPill status={status} />
+            <StatusPill status={incident.status} />
             {incident.priority === "critica" ? (
               <PriorityPill priority="critica" />
             ) : null}
@@ -95,7 +109,7 @@ export default function IncidenciaDetail() {
           </View>
           <View className="px-4 py-3">
             <InfoRow label="Ubicación" value={incident.location} />
-            <InfoRow label="Reportada" value={incident.reportedAt} />
+            <InfoRow label="Reportada" value={timeAgo(incident.createdAt)} />
             <InfoRow label="Tipo" value={labelType[incident.type]} />
             <InfoRow
               label="Departamento"
@@ -104,7 +118,7 @@ export default function IncidenciaDetail() {
             <View className="flex-row justify-between py-2.5">
               <Text className="text-text-muted text-sm">Operario</Text>
               <Text className="text-text text-sm font-medium">
-                {assignee?.name ?? "Sin asignar"}
+                {incident.assignee?.name ?? "Sin asignar"}
               </Text>
             </View>
           </View>
@@ -118,15 +132,16 @@ export default function IncidenciaDetail() {
         </Card>
 
         {/* Acciones por rol */}
-        {isOperarioAssigned && status !== "finalizado" ? (
+        {isOperarioAssigned && incident.status !== "finalizado" ? (
           <Button
-            title={nextStatusLabel[status]}
+            title={update.isPending ? "Actualizando…" : nextStatusLabel[incident.status]}
             icon="arrow-forward-circle-outline"
             onPress={advance}
+            disabled={update.isPending}
           />
         ) : null}
 
-        {isJefe && status !== "finalizado" ? (
+        {isJefe && incident.status !== "finalizado" ? (
           <View className="gap-2">
             <Button
               title="Gestionar incidencia"
@@ -142,7 +157,7 @@ export default function IncidenciaDetail() {
           </View>
         ) : null}
 
-        {isReportador && status === "finalizado" ? (
+        {isReportador && incident.status === "finalizado" ? (
           <Card className="items-center">
             <Text className="text-status-done text-sm font-medium">
               ✓ Incidencia resuelta

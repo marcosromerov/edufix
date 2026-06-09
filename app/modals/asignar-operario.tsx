@@ -5,24 +5,47 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
 import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill } from "../../components/ui/Pills";
-import { findIncident } from "../../data/incidents";
-import { teamMembers } from "../../data/extras";
+import { LoadingView } from "../../components/ui/StateViews";
+import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
+import { useTeam } from "../../hooks/api/users";
 
 export default function AsignarOperario() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const incident = findIncident(id);
+  const { data: incident, isLoading: loadingInc } = useIncident(id);
+  const { data: team = [], isLoading: loadingTeam } = useTeam();
+  const update = useUpdateIncident();
   const [selected, setSelected] = useState<string | null>(null);
 
+  if (loadingInc || loadingTeam) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
+        <ScreenHeader title="Asignar a operario" />
+        <LoadingView />
+      </SafeAreaView>
+    );
+  }
   if (!incident) return null;
 
   const guardar = () => {
     if (!selected) return;
-    Alert.alert("Operario asignado", "", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    update.mutate(
+      { id: incident.id, payload: { assigneeId: selected, isNew: false } },
+      {
+        onSuccess: () => {
+          Alert.alert("Operario asignado", "", [
+            { text: "OK", onPress: () => router.back() },
+          ]);
+        },
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo asignar el operario",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -48,7 +71,7 @@ export default function AsignarOperario() {
         </Text>
 
         <View className="gap-2">
-          {teamMembers.map((m) => {
+          {team.map((m) => {
             const active = selected === m.id;
             return (
               <Pressable
@@ -63,7 +86,9 @@ export default function AsignarOperario() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-text font-semibold">{m.name}</Text>
-                  <Text className="text-text-muted text-xs mt-0.5">{m.role}</Text>
+                  <Text className="text-text-muted text-xs mt-0.5">
+                    {m.role} · {m.activeIncidents} en curso
+                  </Text>
                 </View>
                 <View
                   className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
@@ -78,13 +103,13 @@ export default function AsignarOperario() {
         </View>
 
         <Button
-          title="Guardar cambios"
+          title={update.isPending ? "Guardando…" : "Guardar cambios"}
           onPress={guardar}
-          disabled={!selected}
+          disabled={!selected || update.isPending}
         />
         <Pressable onPress={() => router.back()} className="py-2">
           <Text className="text-text-muted text-center text-sm">
-            Guardar sin asignar
+            Cancelar
           </Text>
         </Pressable>
       </ScrollView>

@@ -3,12 +3,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Logo } from "../../../components/ui/Logo";
 import { Card } from "../../../components/ui/Card";
-import { teamMembers } from "../../../data/extras";
-import { incidents } from "../../../data/incidents";
+import { useTeam } from "../../../hooks/api/users";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { LoadingView } from "../../../components/ui/StateViews";
 
 export default function Equipo() {
+  const { data: team = [], isLoading: loadingTeam } = useTeam();
+  const { data: incidents = [], isLoading: loadingInc } = useIncidents({ scope: "all" });
+
   const enCurso = incidents.filter((i) => i.status !== "finalizado").length;
-  const operarios = teamMembers.length;
+  const operarios = team.length;
   const total = incidents.length;
 
   return (
@@ -38,20 +42,26 @@ export default function Equipo() {
           </View>
         </View>
 
-        <View className="gap-3">
-          {teamMembers.map((m) => (
-            <Card key={m.id} className="flex-row items-center gap-3">
-              <View className="w-11 h-11 rounded-full bg-bg-input items-center justify-center">
-                <Text className="text-text font-bold text-sm">{m.initials}</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-text font-semibold">{m.name}</Text>
-                <Text className="text-text-muted text-xs mt-0.5">{m.role}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color="#5C7090" />
-            </Card>
-          ))}
-        </View>
+        {loadingTeam || loadingInc ? (
+          <LoadingView />
+        ) : (
+          <View className="gap-3">
+            {team.map((m) => (
+              <Card key={m.id} className="flex-row items-center gap-3">
+                <View className="w-11 h-11 rounded-full bg-bg-input items-center justify-center">
+                  <Text className="text-text font-bold text-sm">{m.initials}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-text font-semibold">{m.name}</Text>
+                  <Text className="text-text-muted text-xs mt-0.5">
+                    {m.role} · {m.activeIncidents} en curso
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#5C7090" />
+              </Card>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

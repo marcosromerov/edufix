@@ -3,11 +3,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "../../../components/ui/Logo";
 import { IncidentCard } from "../../../components/IncidentCard";
 import { useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { LoadingView } from "../../../components/ui/StateViews";
 
 export default function IncidenciasOperario() {
   const { user } = useSession();
-  const mine = incidents.filter((i) => i.assigneeId === user?.id);
+  const { data: mine = [], isLoading } = useIncidents({ scope: "assigned" });
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -21,14 +22,20 @@ export default function IncidenciasOperario() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 100, gap: 12 }}>
-        {mine.map((i) => (
-          <IncidentCard key={i.id} incident={i} showId />
-        ))}
-        {mine.length === 0 ? (
-          <Text className="text-text-muted text-center mt-12">
-            No tenés incidencias asignadas
-          </Text>
-        ) : null}
+        {isLoading ? (
+          <LoadingView />
+        ) : (
+          <>
+            {mine.map((i) => (
+              <IncidentCard key={i.id} incident={i} showId />
+            ))}
+            {mine.length === 0 ? (
+              <Text className="text-text-muted text-center mt-12">
+                No tenés incidencias asignadas
+              </Text>
+            ) : null}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

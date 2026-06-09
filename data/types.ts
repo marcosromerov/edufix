@@ -14,42 +14,55 @@ export interface User {
   email: string;
   role: Role;
   initials: string;
-  department?: DepartmentKey;
-  jobTitle?: string;
-  phone?: string;
-  legajo?: string;
+  department?: DepartmentKey | null;
+  jobTitle?: string | null;
+  phone?: string | null;
+  legajo?: string | null;
+}
+
+export interface UserMini {
+  id: string;
+  name: string;
+  initials: string;
+  email?: string;
 }
 
 export interface Incident {
-  id: string;          // INC-8821
+  id: string;          // cuid
+  code: string;        // "INC-8821" - human-readable
   title: string;
-  location: string;    // Aula B-204
-  building?: string;   // Edificio Central
-  reportedAt: string;  // "Hace 15 min" o "9:30 AM" (string libre para mock)
+  location: string;
+  building?: string | null;
   type: IncidentType;
   status: IncidentStatus;
   priority: IncidentPriority;
   department: DepartmentKey;
   description: string;
+  isNew: boolean;
+  createdAt: string;   // ISO timestamp
+  updatedAt: string;
   reporterId: string;
-  assigneeId?: string;
-  isNew?: boolean;     // “Nueva” badge en panel jefe
+  reporter: UserMini;
+  assigneeId?: string | null;
+  assignee?: UserMini | null;
 }
 
 export interface TeamMember {
   id: string;
   name: string;
   initials: string;
-  role: string;        // "Operario senior"
+  role: string;
   activeIncidents: number;
 }
 
 export interface Notification {
   id: string;
+  userId: string;
   text: string;
-  meta: string;        // "INC-8821 - Rotura tubería"
+  meta: string;
   read: boolean;
   type: "status" | "assignment" | "resolved";
+  createdAt: string;
 }
 
 export interface Scan {

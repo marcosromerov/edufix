@@ -3,11 +3,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Logo } from "../../../components/ui/Logo";
-import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { StatBlock } from "../../../components/ui/StatBlock";
 import { session, useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
 
 interface RowItemProps {
   icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
@@ -31,9 +30,9 @@ function RowItem({ icon, label, onPress }: RowItemProps) {
 
 export default function Perfil() {
   const { user } = useSession();
+  const { data: mine = [] } = useIncidents({ scope: "mine" });
   if (!user) return null;
 
-  const mine = incidents.filter((i) => i.reporterId === user.id);
   const reportes = mine.length;
   const resueltas = mine.filter((i) => i.status === "finalizado").length;
   const activas = mine.filter((i) => i.status !== "finalizado").length;
@@ -74,8 +73,8 @@ export default function Perfil() {
           title="Cerrar sesión"
           variant="danger"
           icon="log-out-outline"
-          onPress={() => {
-            session.logout();
+          onPress={async () => {
+            await session.logout();
             router.replace("/(auth)/login");
           }}
         />

@@ -1,27 +1,44 @@
 import { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Link } from "expo-router";
 import { Logo } from "../../components/ui/Logo";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { session } from "../../hooks/useSession";
-import { Role } from "../../data/types";
 
-const roleOptions: { value: Role; label: string; help: string }[] = [
-  { value: "reportador", label: "Reportador", help: "Alumno / docente" },
-  { value: "jefe", label: "Jefe de depto.", help: "Gestiona el equipo" },
-  { value: "operario", label: "Operario", help: "Resuelve incidencias" },
-];
+const quickAccounts = [
+  { label: "Reportador", email: "a.moreno@uade.edu" },
+  { label: "Jefe", email: "j.medina@uade.edu" },
+  { label: "Operario", email: "r.mendez@uade.edu" },
+] as const;
 
 export default function Login() {
-  const [role, setRole] = useState<Role>("reportador");
-  const [email, setEmail] = useState("nombre@universidad.edu");
-  const [password, setPassword] = useState("········");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onLogin = () => {
-    session.login(role);
-    router.replace("/");
+  const onLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Faltan datos", "Ingresá email y contraseña");
+      return;
+    }
+    setLoading(true);
+    try {
+      await session.login(email.trim(), password);
+      router.replace("/");
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.error ?? "No se pudo iniciar sesión. Verificá tus datos.";
+      Alert.alert("Error", msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onQuickFill = (e: string) => {
+    setEmail(e);
+    setPassword("password123");
   };
 
   return (
@@ -32,60 +49,55 @@ export default function Login() {
             <Logo size="lg" />
           </View>
 
-          <View className="gap-1">
-            <Input
-              label="Email"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
+          <Input
+            label="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholder="nombre@universidad.edu"
+            value={email}
+            onChangeText={setEmail}
+          />
 
           <Input
             label="Contraseña"
             secureTextEntry
+            placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
           />
 
           <View className="gap-2">
-            <Text className="text-text-muted text-sm font-medium">
-              Ingresar como (demo)
+            <Text className="text-text-muted text-xs font-medium uppercase tracking-wide">
+              Acceso rápido (demo)
             </Text>
-            <View className="gap-2">
-              {roleOptions.map((r) => {
-                const active = role === r.value;
-                return (
-                  <Pressable
-                    key={r.value}
-                    onPress={() => setRole(r.value)}
-                    className={`flex-row items-center justify-between rounded-xl px-4 py-3 border ${
-                      active
-                        ? "border-accent bg-accent/10"
-                        : "border-border bg-bg-card"
-                    }`}
-                  >
-                    <View>
-                      <Text className="text-text font-semibold">{r.label}</Text>
-                      <Text className="text-text-muted text-xs">{r.help}</Text>
-                    </View>
-                    <View
-                      className={`w-5 h-5 rounded-full border-2 ${
-                        active ? "border-accent bg-accent" : "border-text-dim"
-                      }`}
-                    />
-                  </Pressable>
-                );
-              })}
+            <View className="flex-row gap-2">
+              {quickAccounts.map((q) => (
+                <Pressable
+                  key={q.email}
+                  onPress={() => onQuickFill(q.email)}
+                  className="flex-1 rounded-xl px-3 py-2 border border-border bg-bg-card"
+                >
+                  <Text className="text-text text-center text-sm font-semibold">
+                    {q.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
+            <Text className="text-text-dim text-xs">
+              Pre-llena email + password (password123). Útil para testear las 3 vistas.
+            </Text>
           </View>
         </View>
 
         <View className="gap-4 pb-4">
-          <Button title="Ingresar" onPress={onLogin} />
+          <Button
+            title={loading ? "Ingresando…" : "Ingresar"}
+            onPress={onLogin}
+            disabled={loading}
+          />
+          {loading && <ActivityIndicator color="#22D3EE" />}
           <Link href="/(auth)/register" asChild>
-            <Pressable>
+            <Pressable disabled={loading}>
               <Text className="text-center text-text-muted text-sm">
                 ¿No tenés cuenta?{" "}
                 <Text className="text-accent font-semibold">Registrate</Text>

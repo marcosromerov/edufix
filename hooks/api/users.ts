@@ -1,0 +1,29 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listTeam, listUsers, updateMe } from "../../lib/api/endpoints";
+import type { Role } from "../../data/types";
+import { session } from "../useSession";
+
+export function useTeam() {
+  return useQuery({
+    queryKey: ["users", "team"],
+    queryFn: listTeam,
+  });
+}
+
+export function useUsers(role?: Role) {
+  return useQuery({
+    queryKey: ["users", "list", role],
+    queryFn: () => listUsers(role),
+  });
+}
+
+export function useUpdateMe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateMe,
+    onSuccess: (user) => {
+      session.updateLocalUser(user);
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}

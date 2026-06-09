@@ -5,7 +5,8 @@ import { Logo } from "../../../components/ui/Logo";
 import { IncidentCard } from "../../../components/IncidentCard";
 import { SegmentedTabs } from "../../../components/ui/SegmentedTabs";
 import { useSession } from "../../../hooks/useSession";
-import { incidents } from "../../../data/incidents";
+import { useIncidents } from "../../../hooks/api/incidents";
+import { LoadingView } from "../../../components/ui/StateViews";
 
 const tabs = [
   { key: "todas", label: "Todas" },
@@ -17,14 +18,17 @@ const tabs = [
 export default function IncidenciasJefe() {
   const { user } = useSession();
   const [filter, setFilter] = useState("todas");
+  const { data: incidents = [], isLoading } = useIncidents({ scope: "all" });
 
   const filtered = useMemo(() => {
-    const dept = incidents.filter((i) => i.department === user?.department);
+    const dept = user?.department
+      ? incidents.filter((i) => i.department === user.department)
+      : incidents;
     if (filter === "abiertas") return dept.filter((i) => i.status === "abierto");
     if (filter === "en_proceso") return dept.filter((i) => i.status === "en_proceso");
     if (filter === "finalizadas") return dept.filter((i) => i.status === "finalizado");
     return dept;
-  }, [filter, user]);
+  }, [filter, incidents, user]);
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -41,9 +45,13 @@ export default function IncidenciasJefe() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 100, gap: 12 }}>
-        {filtered.map((i) => (
-          <IncidentCard key={i.id} incident={i} showId />
-        ))}
+        {isLoading ? (
+          <LoadingView />
+        ) : (
+          filtered.map((i) => (
+            <IncidentCard key={i.id} incident={i} showId />
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
