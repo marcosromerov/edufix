@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "EduFix",
+    "slug": "edufix",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "edufix",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.edufix.app"
+    },
+    "android": {
+      "package": "com.edufix.app"
+    },
+    "plugins": ["expo-router"]
+  }
+}

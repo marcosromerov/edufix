@@ -1,0 +1,132 @@
+// Edufix - Prisma schema
+// Run: npm run prisma:migrate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  reportador
+  jefe
+  operario
+}
+
+enum Department {
+  mantenimiento
+  it
+  seguridad
+}
+
+enum IncidentStatus {
+  abierto
+  en_proceso
+  finalizado
+}
+
+enum IncidentPriority {
+  baja
+  media
+  alta
+  critica
+}
+
+enum IncidentType {
+  mantenimiento
+  correctivo
+  preventivo
+}
+
+enum NotificationType {
+  status
+  assignment
+  resolved
+}
+
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  passwordHash  String
+  name          String
+  initials      String
+  role          Role
+  department    Department?
+  jobTitle      String?
+  phone         String?
+  legajo        String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  reportedIncidents Incident[]     @relation("Reporter")
+  assignedIncidents Incident[]     @relation("Assignee")
+  notifications     Notification[]
+  scans             Scan[]
+  refreshTokens     RefreshToken[]
+
+  @@index([role])
+}
+
+model Incident {
+  id          String           @id @default(cuid())
+  code        String           @unique // "INC-8821" - human-readable
+  title       String
+  location    String
+  building    String?
+  type        IncidentType
+  status      IncidentStatus   @default(abierto)
+  priority    IncidentPriority
+  department  Department
+  description String
+  isNew       Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  reporterId  String
+  reporter    User             @relation("Reporter", fields: [reporterId], references: [id])
+  assigneeId  String?
+  assignee    User?            @relation("Assignee", fields: [assigneeId], references: [id])
+
+  @@index([status])
+  @@index([reporterId])
+  @@index([assigneeId])
+  @@index([department])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  meta      String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+model Scan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location  String
+  detail    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
