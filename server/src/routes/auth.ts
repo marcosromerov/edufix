@@ -7,7 +7,7 @@ import {
   generateRefreshToken,
 } from "../lib/jwt.js";
 import { initialsFromName } from "../lib/codes.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
@@ -116,13 +116,13 @@ authRouter.post("/refresh", async (req, res) => {
 });
 
 authRouter.post("/logout", requireAuth, async (req, res) => {
-  const { userId } = req as AuthedRequest;
+  const userId = req.userId!;
   await prisma.refreshToken.deleteMany({ where: { userId } });
   res.json({ ok: true });
 });
 
 authRouter.get("/me", requireAuth, async (req, res) => {
-  const { userId } = req as AuthedRequest;
+  const userId = req.userId!;
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     res.status(404).json({ error: "User not found" });

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/db.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 export const usersRouter = Router();
 
@@ -66,7 +66,7 @@ const updateMeSchema = z.object({
 });
 
 usersRouter.patch("/me", async (req, res) => {
-  const { userId } = req as AuthedRequest;
+  const userId = req.userId!;
   const parsed = updateMeSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input" });

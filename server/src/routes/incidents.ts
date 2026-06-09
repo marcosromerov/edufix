@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/db.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { generateIncidentCode } from "../lib/codes.js";
 
 export const incidentsRouter = Router();
@@ -32,7 +32,8 @@ const listQuerySchema = z.object({
 incidentsRouter.use(requireAuth);
 
 incidentsRouter.get("/", async (req, res) => {
-  const { userId, role } = req as AuthedRequest;
+  const userId = req.userId!;
+  const role = req.role!;
   const q = listQuerySchema.safeParse(req.query);
   if (!q.success) {
     res.status(400).json({ error: "Invalid query" });
@@ -44,7 +45,7 @@ incidentsRouter.get("/", async (req, res) => {
   // - reportador: ve solo las propias (reportadas)
   // - operario: ve las asignadas a si mismo
   // - jefe: ve todas las de su departamento
-  let where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {};
   if (status) where.status = status;
   if (department) where.department = department;
 
@@ -83,7 +84,7 @@ incidentsRouter.get("/:id", async (req, res) => {
 });
 
 incidentsRouter.post("/", async (req, res) => {
-  const { userId } = req as AuthedRequest;
+  const userId = req.userId!;
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
@@ -101,7 +102,8 @@ incidentsRouter.post("/", async (req, res) => {
 });
 
 incidentsRouter.patch("/:id", async (req, res) => {
-  const { role, userId } = req as AuthedRequest;
+  const role = req.role!;
+  const userId = req.userId!;
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input" });
