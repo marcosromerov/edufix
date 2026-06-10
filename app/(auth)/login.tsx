@@ -8,7 +8,6 @@ import { Input } from "../../components/ui/Input";
 import { session } from "../../hooks/useSession";
 
 const quickAccounts = [
-  { label: "Reportador", email: "a.moreno@uade.edu" },
   { label: "Jefe", email: "j.medina@uade.edu" },
   { label: "Operario", email: "r.mendez@uade.edu" },
 ] as const;
@@ -84,7 +83,7 @@ export default function Login() {
               ))}
             </View>
             <Text className="text-text-dim text-xs">
-              Pre-llena email + password (password123). Útil para testear las 3 vistas.
+              Pre-llena email + password (password123). Los reportadores se registran abajo.
             </Text>
           </View>
         </View>
