@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build:client": "cd .. && npm install --legacy-peer-deps --no-audit --no-fund && npm run build:web",
-    "build": "npm run build:client && tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
