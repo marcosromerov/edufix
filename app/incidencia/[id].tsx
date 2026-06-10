@@ -9,7 +9,11 @@ import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import { useSession } from "../../hooks/useSession";
-import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
+import {
+  useIncident,
+  useUpdateIncident,
+  useDeleteIncident,
+} from "../../hooks/api/incidents";
 import { IncidentStatus } from "../../data/types";
 import { timeAgo } from "../../lib/time";
 
@@ -42,6 +46,7 @@ export default function IncidenciaDetail() {
   const { user } = useSession();
   const { data: incident, isLoading } = useIncident(id);
   const update = useUpdateIncident();
+  const remove = useDeleteIncident();
 
   if (isLoading) {
     return (
@@ -82,6 +87,38 @@ export default function IncidenciaDetail() {
         },
       },
     );
+  };
+
+  const reject = () => {
+    const doDelete = () => {
+      remove.mutate(incident.id, {
+        onSuccess: () => {
+          router.back();
+        },
+        onError: (e: any) => {
+          Alert.alert(
+            "Error",
+            e?.response?.data?.error ?? "No se pudo rechazar la incidencia",
+          );
+        },
+      });
+    };
+    // Confirmacion: Alert.alert con botones no funciona en web,
+    // usamos window.confirm si esta disponible.
+    if (typeof window !== "undefined" && typeof window.confirm === "function") {
+      if (window.confirm("¿Rechazar esta incidencia? Se eliminará permanentemente.")) {
+        doDelete();
+      }
+    } else {
+      Alert.alert(
+        "Rechazar incidencia",
+        "Se va a eliminar permanentemente. ¿Continuar?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Rechazar", style: "destructive", onPress: doDelete },
+        ],
+      );
+    }
   };
 
   return (
@@ -133,12 +170,21 @@ export default function IncidenciaDetail() {
 
         {/* Acciones por rol */}
         {isOperarioAssigned && incident.status !== "finalizado" ? (
-          <Button
-            title={update.isPending ? "Actualizando…" : nextStatusLabel[incident.status]}
-            icon="arrow-forward-circle-outline"
-            onPress={advance}
-            disabled={update.isPending}
-          />
+          <View className="gap-2">
+            <Button
+              title={update.isPending ? "Actualizando…" : nextStatusLabel[incident.status]}
+              icon="arrow-forward-circle-outline"
+              onPress={advance}
+              disabled={update.isPending || remove.isPending}
+            />
+            <Button
+              title={remove.isPending ? "Rechazando…" : "Rechazar incidencia"}
+              icon="close-circle-outline"
+              variant="danger"
+              onPress={reject}
+              disabled={update.isPending || remove.isPending}
+            />
+          </View>
         ) : null}
 
         {isJefe && incident.status !== "finalizado" ? (

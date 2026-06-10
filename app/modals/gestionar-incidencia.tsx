@@ -8,7 +8,11 @@ import { Input } from "../../components/ui/Input";
 import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
-import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
+import {
+  useIncident,
+  useUpdateIncident,
+  useDeleteIncident,
+} from "../../hooks/api/incidents";
 import { IncidentPriority } from "../../data/types";
 
 function Chip({
@@ -54,6 +58,7 @@ export default function GestionarIncidencia() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: incident, isLoading } = useIncident(id);
   const update = useUpdateIncident();
+  const remove = useDeleteIncident();
 
   const [priority, setPriority] = useState<IncidentPriority | null>(null);
   const [rechazando, setRechazando] = useState(false);
@@ -95,13 +100,19 @@ export default function GestionarIncidencia() {
   };
 
   const rechazar = () => {
-    // Backend no soporta "rechazo" formal todavia.
-    // Por ahora cerramos el modal y avisamos.
-    Alert.alert(
-      "Incidencia rechazada",
-      "(Funcionalidad de rechazo formal pendiente de implementar en backend)",
-      [{ text: "OK", onPress: () => router.back() }],
-    );
+    remove.mutate(incident.id, {
+      onSuccess: () => {
+        // Volvemos dos veces: cerramos modal + cerramos detalle (la incidencia ya no existe)
+        router.back();
+        router.back();
+      },
+      onError: (e: any) => {
+        Alert.alert(
+          "Error",
+          e?.response?.data?.error ?? "No se pudo rechazar la incidencia",
+        );
+      },
+    });
   };
 
   return (
@@ -170,8 +181,13 @@ export default function GestionarIncidencia() {
               />
             </View>
 
-            <Button title="Confirmar rechazo" variant="danger" onPress={rechazar} />
-            <Pressable onPress={() => setRechazando(false)} className="py-2">
+            <Button
+              title={remove.isPending ? "Rechazando…" : "Confirmar rechazo"}
+              variant="danger"
+              onPress={rechazar}
+              disabled={remove.isPending}
+            />
+            <Pressable onPress={() => setRechazando(false)} className="py-2" disabled={remove.isPending}>
               <Text className="text-text-muted text-center text-sm">Cancelar</Text>
             </Pressable>
           </>

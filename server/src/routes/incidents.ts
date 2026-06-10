@@ -101,6 +101,38 @@ incidentsRouter.post("/", async (req, res) => {
   res.status(201).json(inc);
 });
 
+incidentsRouter.delete("/:id", async (req, res) => {
+  const role = req.role!;
+  const userId = req.userId!;
+
+  const inc = await prisma.incident.findUnique({ where: { id: req.params.id } });
+  if (!inc) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  // Solo el operario asignado o un jefe pueden rechazar/borrar
+  const isAssignedOperario = role === "operario" && inc.assigneeId === userId;
+  const isJefe = role === "jefe";
+  if (!isAssignedOperario && !isJefe) {
+    res.status(403).json({ error: "No tenés permiso para rechazar esta incidencia" });
+    return;
+  }
+
+  // Notificar al reportador antes de borrar la incidencia
+  await prisma.notification.create({
+    data: {
+      userId: inc.reporterId,
+      text: "Tu incidencia fue rechazada",
+      meta: `${inc.code} · ${inc.title}`,
+      type: "status",
+    },
+  });
+
+  await prisma.incident.delete({ where: { id: req.params.id } });
+  res.json({ ok: true, deletedId: req.params.id });
+});
+
 incidentsRouter.patch("/:id", async (req, res) => {
   const role = req.role!;
   const userId = req.userId!;

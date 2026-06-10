@@ -97,6 +97,10 @@ export async function updateIncident(
   return r.data;
 }
 
+export async function deleteIncident(id: string): Promise<void> {
+  await api.delete(`/incidents/${id}`);
+}
+
 // =================== NOTIFICATIONS ===================
 
 export async function listNotifications(): Promise<Notification[]> {
