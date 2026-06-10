@@ -1,6 +1,9 @@
 # Edufix - imagen unica que sirve web + API
 FROM node:22-bookworm-slim AS builder
 
+# OpenSSL es requerido por Prisma en imagenes slim
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copiar todo el repo
@@ -19,6 +22,10 @@ RUN npm run build
 
 # --- Runtime ---
 FROM node:22-bookworm-slim
+
+# OpenSSL tambien en runtime para prisma migrate deploy + driver de @prisma/client
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copiar el bundle del web (necesario para que el server lo sirva)
