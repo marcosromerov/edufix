@@ -27,16 +27,22 @@ function setState(next: Partial<SessionState>) {
 
 export const session = {
   async bootstrap() {
-    const access = await tokens.getAccess();
-    if (!access) {
-      setState({ status: "ready", user: null });
-      return;
-    }
     try {
-      const user = await meApi();
-      setState({ status: "ready", user });
-    } catch {
-      await tokens.clear();
+      const access = await tokens.getAccess();
+      if (!access) {
+        setState({ status: "ready", user: null });
+        return;
+      }
+      try {
+        const user = await meApi();
+        setState({ status: "ready", user });
+      } catch {
+        await tokens.clear();
+        setState({ status: "ready", user: null });
+      }
+    } catch (e) {
+      // Cualquier error inesperado (storage roto, etc) -> seguir como logged out
+      console.warn("[session] bootstrap fallo, sigo como logged out:", e);
       setState({ status: "ready", user: null });
     }
   },
