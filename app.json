@@ -15,7 +15,7 @@
     },
     "plugins": ["expo-router"],
     "extra": {
-      "apiUrl": "https://edufix-production.up.railway.app"
+      "apiUrl": "http://localhost:4010"
     }
   }
 }
