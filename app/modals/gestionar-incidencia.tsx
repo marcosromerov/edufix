@@ -102,9 +102,16 @@ export default function GestionarIncidencia() {
   const rechazar = () => {
     remove.mutate(incident.id, {
       onSuccess: () => {
-        // Volvemos dos veces: cerramos modal + cerramos detalle (la incidencia ya no existe)
-        router.back();
-        router.back();
+        Alert.alert("Incidencia rechazada", "Se notificó al reportador.", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Cerrar modal + detalle de incidencia (ya no existe)
+              router.back();
+              setTimeout(() => router.back(), 50);
+            },
+          },
+        ]);
       },
       onError: (e: any) => {
         Alert.alert(

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
@@ -79,6 +79,13 @@ export default function IncidenciaDetail() {
     update.mutate(
       { id: incident.id, payload: { status: next } },
       {
+        onSuccess: () => {
+          const msg =
+            next === "finalizado"
+              ? "Incidencia marcada como finalizada."
+              : "Estado actualizado a En proceso.";
+          Alert.alert("Cambio guardado", msg);
+        },
         onError: (e: any) => {
           Alert.alert(
             "Error",
@@ -167,6 +174,16 @@ export default function IncidenciaDetail() {
             {incident.description}
           </Text>
         </Card>
+
+        {incident.imageBase64 ? (
+          <Card className="p-0 overflow-hidden">
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${incident.imageBase64}` }}
+              style={{ width: "100%", height: 220 }}
+              resizeMode="cover"
+            />
+          </Card>
+        ) : null}
 
         {/* Acciones por rol */}
         {isOperarioAssigned && incident.status !== "finalizado" ? (

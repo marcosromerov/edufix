@@ -4,6 +4,7 @@ import type {
   Incident,
   Notification,
   TeamMember,
+  PendingOperario,
   Role,
   IncidentStatus,
   IncidentPriority,
@@ -35,8 +36,11 @@ export async function loginApi(email: string, password: string): Promise<AuthRes
   return r.data;
 }
 
-export async function registerApi(payload: RegisterPayload): Promise<AuthResponse> {
-  const r = await api.post<AuthResponse>("/auth/register", payload);
+export async function registerApi(
+  payload: RegisterPayload,
+): Promise<AuthResponse | { pending: true }> {
+  const r = await api.post<AuthResponse | { pending: true }>("/auth/register", payload);
+  if (r.status === 202) return { pending: true };
   return r.data;
 }
 
@@ -65,6 +69,7 @@ export interface CreateIncidentPayload {
   priority: IncidentPriority;
   department: DepartmentKey;
   description: string;
+  imageBase64?: string;
 }
 
 export interface UpdateIncidentPayload {
@@ -126,6 +131,19 @@ export async function listUsers(role?: Role): Promise<User[]> {
 export async function listTeam(): Promise<TeamMember[]> {
   const r = await api.get<TeamMember[]>("/users/team");
   return r.data;
+}
+
+export async function listPendingOperarios(): Promise<PendingOperario[]> {
+  const r = await api.get<PendingOperario[]>("/users/pending");
+  return r.data;
+}
+
+export async function approveOperario(id: string): Promise<void> {
+  await api.post(`/users/${id}/approve`);
+}
+
+export async function rejectOperario(id: string): Promise<void> {
+  await api.delete(`/users/${id}/reject`);
 }
 
 export async function updateMe(payload: {

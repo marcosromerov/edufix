@@ -30,6 +30,12 @@ authRouter.post("/register", async (req, res) => {
   }
   const { email, password, name, role, ...rest } = parsed.data;
 
+  // Operarios deben seleccionar departamento
+  if (role === "operario" && !rest.department) {
+    res.status(400).json({ error: "Los operarios deben seleccionar un departamento" });
+    return;
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     res.status(409).json({ error: "Email already registered" });
@@ -37,6 +43,10 @@ authRouter.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+
+  // Operarios quedan pendientes hasta que el jefe los apruebe
+  const status = role === "operario" ? "pending" : "active";
+
   const user = await prisma.user.create({
     data: {
       email,
@@ -44,9 +54,16 @@ authRouter.post("/register", async (req, res) => {
       name,
       initials: initialsFromName(name),
       role,
+      status,
       ...rest,
     },
   });
+
+  if (status === "pending") {
+    // No emitimos tokens: el operario no puede loguearse hasta ser aprobado
+    res.status(202).json({ pending: true });
+    return;
+  }
 
   const accessToken = signAccessToken({ sub: user.id, role: user.role });
   const { token: refreshToken, expiresAt } = generateRefreshToken();
@@ -55,7 +72,7 @@ authRouter.post("/register", async (req, res) => {
   });
 
   const { passwordHash: _ph, ...safe } = user;
-  res.json({ user: safe, accessToken, refreshToken });
+  res.status(201).json({ user: safe, accessToken, refreshToken });
 });
 
 const loginSchema = z.object({
@@ -79,6 +96,13 @@ authRouter.post("/login", async (req, res) => {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+
+  if (user.status === "pending") {
+    res.status(403).json({
+      error: "Tu cuenta está pendiente de aprobación. El jefe de departamento revisará tu solicitud.",
+    });
     return;
   }
 

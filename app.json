@@ -13,7 +13,22 @@
     "android": {
       "package": "com.edufix.app"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EduFix necesita la cámara para escanear códigos QR de las aulas."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EduFix necesita acceso a tus fotos para adjuntar imágenes a los reportes.",
+          "cameraPermission": "EduFix necesita la cámara para fotografiar incidencias."
+        }
+      ]
+    ],
     "extra": {
       "apiUrl": "https://edufix-production.up.railway.app"
     }

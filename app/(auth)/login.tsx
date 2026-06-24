@@ -7,11 +7,6 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { session } from "../../hooks/useSession";
 
-const quickAccounts = [
-  { label: "Jefe", email: "j.medina@uade.edu" },
-  { label: "Operario", email: "r.mendez@uade.edu" },
-] as const;
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,11 +28,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const onQuickFill = (e: string) => {
-    setEmail(e);
-    setPassword("password123");
   };
 
   return (
@@ -64,28 +54,6 @@ export default function Login() {
             value={password}
             onChangeText={setPassword}
           />
-
-          <View className="gap-2">
-            <Text className="text-text-muted text-xs font-medium uppercase tracking-wide">
-              Acceso rápido (demo)
-            </Text>
-            <View className="flex-row gap-2">
-              {quickAccounts.map((q) => (
-                <Pressable
-                  key={q.email}
-                  onPress={() => onQuickFill(q.email)}
-                  className="flex-1 rounded-xl px-3 py-2 border border-border bg-bg-card"
-                >
-                  <Text className="text-text text-center text-sm font-semibold">
-                    {q.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            <Text className="text-text-dim text-xs">
-              Pre-llena email + password (password123). Los reportadores se registran abajo.
-            </Text>
-          </View>
         </View>
 
         <View className="gap-4 pb-4">

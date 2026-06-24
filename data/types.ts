@@ -8,16 +8,28 @@ export type IncidentType = "mantenimiento" | "correctivo" | "preventivo";
 
 export type DepartmentKey = "mantenimiento" | "it" | "seguridad";
 
+export type UserStatus = "active" | "pending";
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  status?: UserStatus;
   initials: string;
   department?: DepartmentKey | null;
   jobTitle?: string | null;
   phone?: string | null;
   legajo?: string | null;
+}
+
+export interface PendingOperario {
+  id: string;
+  name: string;
+  initials: string;
+  email: string;
+  department?: DepartmentKey | null;
+  createdAt: string;
 }
 
 export interface UserMini {
@@ -39,6 +51,7 @@ export interface Incident {
   department: DepartmentKey;
   description: string;
   isNew: boolean;
+  imageBase64?: string | null;
   createdAt: string;   // ISO timestamp
   updatedAt: string;
   reporterId: string;

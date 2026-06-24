@@ -13,7 +13,8 @@ const createSchema = z.object({
   type: z.enum(["mantenimiento", "correctivo", "preventivo"]),
   priority: z.enum(["baja", "media", "alta", "critica"]),
   department: z.enum(["mantenimiento", "it", "seguridad"]),
-  description: z.string().min(2),
+  description: z.string().min(1),
+  imageBase64: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -60,7 +61,11 @@ incidentsRouter.get("/", async (req, res) => {
   const items = await prisma.incident.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true, code: true, title: true, location: true, building: true,
+      type: true, status: true, priority: true, department: true,
+      description: true, isNew: true, createdAt: true, updatedAt: true,
+      reporterId: true, assigneeId: true,
       reporter: { select: { id: true, name: true, initials: true } },
       assignee: { select: { id: true, name: true, initials: true } },
     },
