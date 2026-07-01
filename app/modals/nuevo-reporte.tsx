@@ -67,7 +67,30 @@ export default function NuevoReporte() {
 
   const filteredCatalog = incidentCatalog.filter((i) => i.department === deptFilter);
 
-  const pickImage = async () => {
+  const pickerOptions: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 0.4,
+    base64: true,
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Sin permiso",
+        "Necesitamos acceso a la cámara para tomar la foto.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync(pickerOptions);
+    if (!result.canceled && result.assets[0]) {
+      setImageBase64(result.assets[0].base64 ?? null);
+    }
+  };
+
+  const pickFromLibrary = async () => {
     if (Platform.OS !== "web") {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
@@ -78,18 +101,23 @@ export default function NuevoReporte() {
         return;
       }
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-      base64: true,
-    });
-
+    const result = await ImagePicker.launchImageLibraryAsync(pickerOptions);
     if (!result.canceled && result.assets[0]) {
       setImageBase64(result.assets[0].base64 ?? null);
     }
+  };
+
+  const pickImage = () => {
+    // En web no hay cámara nativa: vamos directo a la galería / selector de archivos.
+    if (Platform.OS === "web") {
+      pickFromLibrary();
+      return;
+    }
+    Alert.alert("Adjuntar imagen", "¿De dónde querés sacar la foto?", [
+      { text: "Tomar foto", onPress: takePhoto },
+      { text: "Elegir de galería", onPress: pickFromLibrary },
+      { text: "Cancelar", style: "cancel" },
+    ]);
   };
 
   const enviar = () => {

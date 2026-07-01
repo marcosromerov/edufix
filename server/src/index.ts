@@ -15,7 +15,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: "1mb" }));
+// 15mb: las incidencias pueden traer una foto embebida en base64
+app.use(express.json({ limit: "15mb" }));
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });

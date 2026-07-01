@@ -5,7 +5,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import {
@@ -138,8 +137,6 @@ export default function GestionarIncidencia() {
             {incident.building ? ` · ${incident.building}` : ""}
           </Text>
         </View>
-
-        <MapPlaceholder />
 
         {!rechazando ? (
           <>

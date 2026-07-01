@@ -5,7 +5,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Button } from "../../components/ui/Button";
-import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
@@ -63,8 +62,6 @@ export default function AsignarOperario() {
             {incident.building ? ` · ${incident.building}` : ""}
           </Text>
         </View>
-
-        <MapPlaceholder />
 
         <Text className="text-text-muted text-sm font-medium">
           Lista de operarios

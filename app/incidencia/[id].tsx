@@ -1,11 +1,12 @@
-import { View, Text, ScrollView, Alert, Image } from "react-native";
+import { useState } from "react";
+import { View, Text, ScrollView, Alert, Image, Pressable, Modal } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { InfoRow } from "../../components/ui/InfoRow";
-import { MapPlaceholder } from "../../components/MapPlaceholder";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import { useSession } from "../../hooks/useSession";
@@ -44,6 +45,7 @@ const nextStatusLabel: Record<IncidentStatus, string> = {
 export default function IncidenciaDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useSession();
+  const [imageOpen, setImageOpen] = useState(false);
   const { data: incident, isLoading } = useIncident(id);
   const update = useUpdateIncident();
   const remove = useDeleteIncident();
@@ -147,24 +149,19 @@ export default function IncidenciaDetail() {
           </Text>
         </View>
 
-        <Card className="p-0 overflow-hidden">
-          <View className="px-1 pt-1">
-            <MapPlaceholder />
-          </View>
-          <View className="px-4 py-3">
-            <InfoRow label="Ubicación" value={incident.location} />
-            <InfoRow label="Reportada" value={timeAgo(incident.createdAt)} />
-            <InfoRow label="Tipo" value={labelType[incident.type]} />
-            <InfoRow
-              label="Departamento"
-              value={labelDept[incident.department]}
-            />
-            <View className="flex-row justify-between py-2.5">
-              <Text className="text-text-muted text-sm">Operario</Text>
-              <Text className="text-text text-sm font-medium">
-                {incident.assignee?.name ?? "Sin asignar"}
-              </Text>
-            </View>
+        <Card>
+          <InfoRow label="Ubicación" value={incident.location} />
+          <InfoRow label="Reportada" value={timeAgo(incident.createdAt)} />
+          <InfoRow label="Tipo" value={labelType[incident.type]} />
+          <InfoRow
+            label="Departamento"
+            value={labelDept[incident.department]}
+          />
+          <View className="flex-row justify-between py-2.5">
+            <Text className="text-text-muted text-sm">Operario</Text>
+            <Text className="text-text text-sm font-medium">
+              {incident.assignee?.name ?? "Sin asignar"}
+            </Text>
           </View>
         </Card>
 
@@ -176,13 +173,19 @@ export default function IncidenciaDetail() {
         </Card>
 
         {incident.imageBase64 ? (
-          <Card className="p-0 overflow-hidden">
-            <Image
-              source={{ uri: `data:image/jpeg;base64,${incident.imageBase64}` }}
-              style={{ width: "100%", height: 220 }}
-              resizeMode="cover"
-            />
-          </Card>
+          <Pressable onPress={() => setImageOpen(true)} className="active:opacity-80">
+            <Card className="p-0 overflow-hidden">
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${incident.imageBase64}` }}
+                style={{ width: "100%", height: 220 }}
+                resizeMode="cover"
+              />
+              <View className="absolute bottom-2 right-2 flex-row items-center gap-1 bg-black/60 rounded-lg px-2 py-1">
+                <Ionicons name="expand-outline" size={13} color="#fff" />
+                <Text className="text-white text-xs font-medium">Ampliar</Text>
+              </View>
+            </Card>
+          </Pressable>
         ) : null}
 
         {/* Acciones por rol */}
@@ -228,6 +231,33 @@ export default function IncidenciaDetail() {
           </Card>
         ) : null}
       </ScrollView>
+
+      {/* Visor de imagen a pantalla completa */}
+      <Modal
+        visible={imageOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageOpen(false)}
+      >
+        <Pressable
+          onPress={() => setImageOpen(false)}
+          className="flex-1 bg-black/95 items-center justify-center"
+        >
+          {incident.imageBase64 ? (
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${incident.imageBase64}` }}
+              style={{ width: "100%", height: "80%" }}
+              resizeMode="contain"
+            />
+          ) : null}
+          <Pressable
+            onPress={() => setImageOpen(false)}
+            className="absolute top-14 right-5 bg-white/15 rounded-full p-2 active:opacity-70"
+          >
+            <Ionicons name="close" size={24} color="#fff" />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
