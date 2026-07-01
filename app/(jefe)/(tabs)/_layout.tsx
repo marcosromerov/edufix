@@ -1,23 +1,10 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTabScreenOptions } from "../../../lib/ui/tabBar";
 
 export default function JefeTabs() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: "#1A2740",
-          borderTopColor: "#2A3A5C",
-          height: 64,
-          paddingBottom: 10,
-          paddingTop: 6,
-        },
-        tabBarActiveTintColor: "#22D3EE",
-        tabBarInactiveTintColor: "#8FA1BD",
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
-      }}
-    >
+    <Tabs screenOptions={useTabScreenOptions()}>
       <Tabs.Screen
         name="panel"
         options={{

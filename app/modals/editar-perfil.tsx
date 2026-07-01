@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
-import { alertThen } from "../../lib/ui/alert";
+import { showToast } from "../../lib/ui/toast";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { useSession } from "../../hooks/useSession";
@@ -22,7 +22,8 @@ export default function EditarPerfil() {
       { name, phone },
       {
         onSuccess: () => {
-          alertThen("Listo", "Cambios guardados.", () => router.back());
+          router.back();
+          showToast("Cambios guardados");
         },
         onError: (e: any) => {
           Alert.alert(

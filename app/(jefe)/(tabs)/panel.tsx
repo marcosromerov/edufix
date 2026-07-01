@@ -14,10 +14,12 @@ export default function Panel() {
   });
 
   const { data: incidents = [], isLoading } = useIncidents({ scope: "all" });
-  const nuevas = incidents.filter((i) => i.isNew).length;
+  // Contadores por estado, consistentes con la lista de incidencias.
+  const abiertas = incidents.filter((i) => i.status === "abierto").length;
   const enProceso = incidents.filter((i) => i.status === "en_proceso").length;
   const resueltas = incidents.filter((i) => i.status === "finalizado").length;
-  const pendientes = incidents.filter((i) => i.isNew);
+  // Pendientes de asignar = sin operario asignado.
+  const pendientes = incidents.filter((i) => !i.assigneeId);
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
@@ -31,8 +33,8 @@ export default function Panel() {
 
         <View className="flex-row gap-3 mb-6">
           <View className="flex-1 bg-bg-card rounded-2xl py-4 px-3 items-center border border-border/40">
-            <Text className="text-status-open text-3xl font-bold">{nuevas}</Text>
-            <Text className="text-text-muted text-xs mt-1">Nuevas</Text>
+            <Text className="text-status-open text-3xl font-bold">{abiertas}</Text>
+            <Text className="text-text-muted text-xs mt-1">Abiertas</Text>
           </View>
           <View className="flex-1 bg-bg-card rounded-2xl py-4 px-3 items-center border border-border/40">
             <Text className="text-status-progress text-3xl font-bold">{enProceso}</Text>

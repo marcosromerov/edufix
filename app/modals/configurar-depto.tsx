@@ -7,7 +7,7 @@ import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { alertThen } from "../../lib/ui/alert";
+import { showToast } from "../../lib/ui/toast";
 
 export default function ConfigurarDepto() {
   const [nombre, setNombre] = useState("Mantenimiento General");
@@ -15,7 +15,8 @@ export default function ConfigurarDepto() {
   const [email, setEmail] = useState("mantenimiento@uade.edu");
 
   const guardar = () => {
-    alertThen("Configuración guardada", "", () => router.back());
+    router.back();
+    showToast("Configuración guardada");
   };
 
   return (

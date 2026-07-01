@@ -9,7 +9,7 @@ import { StatusPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
 import { useTeam } from "../../hooks/api/users";
-import { alertThen } from "../../lib/ui/alert";
+import { showToast } from "../../lib/ui/toast";
 
 export default function AsignarOperario() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,11 +30,13 @@ export default function AsignarOperario() {
 
   const guardar = () => {
     if (!selected) return;
+    const nombre = team.find((m) => m.id === selected)?.name ?? "Operario";
     update.mutate(
       { id: incident.id, payload: { assigneeId: selected, isNew: false } },
       {
         onSuccess: () => {
-          alertThen("Operario asignado", "", () => router.back());
+          router.back();
+          showToast(`Operario ${nombre} asignado`);
         },
         onError: (e: any) => {
           Alert.alert(

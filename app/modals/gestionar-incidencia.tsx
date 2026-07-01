@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { StatusPill, PriorityPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
-import { alertThen } from "../../lib/ui/alert";
+import { showToast } from "../../lib/ui/toast";
 import {
   useIncident,
   useUpdateIncident,
@@ -85,7 +85,8 @@ export default function GestionarIncidencia() {
       { id: incident.id, payload: { priority } },
       {
         onSuccess: () => {
-          alertThen("Cambios guardados", "", () => router.back());
+          router.back();
+          showToast("Cambios guardados");
         },
         onError: (e: any) => {
           Alert.alert(
@@ -100,11 +101,10 @@ export default function GestionarIncidencia() {
   const rechazar = () => {
     remove.mutate(incident.id, {
       onSuccess: () => {
-        alertThen("Incidencia rechazada", "Se notificó al reportador.", () => {
-          // Cerrar modal + detalle de incidencia (ya no existe)
-          router.back();
-          setTimeout(() => router.back(), 50);
-        });
+        // Cerrar modal + detalle de incidencia (ya no existe)
+        router.back();
+        setTimeout(() => router.back(), 50);
+        showToast("Incidencia rechazada");
       },
       onError: (e: any) => {
         Alert.alert(

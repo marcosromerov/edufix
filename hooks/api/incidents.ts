@@ -20,6 +20,12 @@ export function useIncidents(q: IncidentsQuery = {}) {
   return useQuery({
     queryKey: incidentsKeys.list(q),
     queryFn: () => listIncidents(q),
+    // Mantener las listas al día: recargar al entrar a la pantalla y
+    // refrescar cada pocos segundos para que las incidencias nuevas aparezcan
+    // apenas se crean (útil en el panel del jefe).
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 5000,
   });
 }
 

@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSessionBootstrap } from "../hooks/useSession";
+import { Toast } from "../components/ui/Toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ export default function RootLayout() {
               animation: "fade",
             }}
           />
+          <Toast />
         </View>
       </SafeAreaProvider>
     </QueryClientProvider>
