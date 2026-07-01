@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Logo } from "../../components/ui/Logo";
@@ -51,11 +51,18 @@ export default function Register() {
       });
 
       if (result && "pending" in result && result.pending) {
-        Alert.alert(
-          "Solicitud enviada",
-          "Tu cuenta está pendiente de aprobación. El jefe de departamento revisará tu solicitud y te habilitará el acceso.",
-          [{ text: "Entendido", onPress: () => router.replace("/(auth)/login") }],
-        );
+        const msg =
+          "Tu cuenta está pendiente de aprobación. El jefe de departamento revisará tu solicitud y te habilitará el acceso.";
+        // En web Alert.alert no dispara el onPress de los botones, así que
+        // navegamos siempre y usamos window.alert para el aviso.
+        if (Platform.OS === "web") {
+          window.alert(`Solicitud enviada\n\n${msg}`);
+          router.replace("/(auth)/login");
+        } else {
+          Alert.alert("Solicitud enviada", msg, [
+            { text: "Entendido", onPress: () => router.replace("/(auth)/login") },
+          ]);
+        }
         return;
       }
 
