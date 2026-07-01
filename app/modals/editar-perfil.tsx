@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ui/ScreenHeader";
+import { alertThen } from "../../lib/ui/alert";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { useSession } from "../../hooks/useSession";
@@ -22,9 +22,7 @@ export default function EditarPerfil() {
       { name, phone },
       {
         onSuccess: () => {
-          Alert.alert("Listo", "Cambios guardados.", [
-            { text: "OK", onPress: () => router.back() },
-          ]);
+          alertThen("Listo", "Cambios guardados.", () => router.back());
         },
         onError: (e: any) => {
           Alert.alert(
@@ -45,10 +43,6 @@ export default function EditarPerfil() {
           <View className="w-24 h-24 rounded-full bg-bg-input items-center justify-center border-2 border-accent/30">
             <Text className="text-text text-3xl font-bold">{user.initials}</Text>
           </View>
-          <Pressable className="flex-row items-center gap-1.5 bg-bg-input px-3 py-1.5 rounded-lg">
-            <Ionicons name="camera-outline" size={14} color="#22D3EE" />
-            <Text className="text-accent text-xs font-medium">Cambiar foto</Text>
-          </Pressable>
         </View>
 
         <Input label="Nombre y apellido" value={name} onChangeText={setName} />

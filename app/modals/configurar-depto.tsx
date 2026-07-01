@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { ScreenHeader } from "../../components/ui/ScreenHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { alertThen } from "../../lib/ui/alert";
 
 export default function ConfigurarDepto() {
   const [nombre, setNombre] = useState("Mantenimiento General");
@@ -14,9 +15,7 @@ export default function ConfigurarDepto() {
   const [email, setEmail] = useState("mantenimiento@uade.edu");
 
   const guardar = () => {
-    Alert.alert("Configuración guardada", "", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    alertThen("Configuración guardada", "", () => router.back());
   };
 
   return (

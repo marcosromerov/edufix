@@ -26,6 +26,13 @@ export default function OperarioTabs() {
         }}
       />
       <Tabs.Screen
+        name="notificaciones"
+        options={{
+          title: "Avisos",
+          tabBarIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="perfil"
         options={{
           title: "Perfil",

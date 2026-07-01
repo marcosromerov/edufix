@@ -9,6 +9,7 @@ import { StatusPill } from "../../components/ui/Pills";
 import { LoadingView } from "../../components/ui/StateViews";
 import { useIncident, useUpdateIncident } from "../../hooks/api/incidents";
 import { useTeam } from "../../hooks/api/users";
+import { alertThen } from "../../lib/ui/alert";
 
 export default function AsignarOperario() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,9 +34,7 @@ export default function AsignarOperario() {
       { id: incident.id, payload: { assigneeId: selected, isNew: false } },
       {
         onSuccess: () => {
-          Alert.alert("Operario asignado", "", [
-            { text: "OK", onPress: () => router.back() },
-          ]);
+          alertThen("Operario asignado", "", () => router.back());
         },
         onError: (e: any) => {
           Alert.alert(

@@ -64,9 +64,11 @@ export default function Perfil() {
             label="Editar perfil"
             onPress={() => router.push("/modals/editar-perfil")}
           />
-          <RowItem icon="notifications-outline" label="Notificaciones" />
-          <RowItem icon="lock-closed-outline" label="Seguridad" />
-          <RowItem icon="help-circle-outline" label="Soporte" />
+          <RowItem
+            icon="notifications-outline"
+            label="Notificaciones"
+            onPress={() => router.push("/(reportador)/(tabs)/notificaciones")}
+          />
         </View>
 
         <Button
