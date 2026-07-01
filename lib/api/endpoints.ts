@@ -20,13 +20,11 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+// El registro público es solo para reportadores; el rol lo fija el server.
 export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
-  role: Role;
-  department?: DepartmentKey;
-  jobTitle?: string;
   phone?: string;
   legajo?: string;
 }
@@ -36,11 +34,8 @@ export async function loginApi(email: string, password: string): Promise<AuthRes
   return r.data;
 }
 
-export async function registerApi(
-  payload: RegisterPayload,
-): Promise<AuthResponse | { pending: true }> {
-  const r = await api.post<AuthResponse | { pending: true }>("/auth/register", payload);
-  if (r.status === 202) return { pending: true };
+export async function registerApi(payload: RegisterPayload): Promise<AuthResponse> {
+  const r = await api.post<AuthResponse>("/auth/register", payload);
   return r.data;
 }
 

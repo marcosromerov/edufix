@@ -30,7 +30,6 @@ export default function Register() {
         name,
         email: email.trim(),
         password,
-        role: "reportador",
         legajo: legajo || undefined,
       });
       router.replace("/");

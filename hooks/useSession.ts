@@ -52,12 +52,8 @@ export const session = {
     setState({ user, status: "ready" });
     return user;
   },
-  async register(payload: RegisterPayload): Promise<User | { pending: true }> {
-    const result = await registerApi(payload);
-    if ("pending" in result && result.pending) {
-      return { pending: true };
-    }
-    const { user, accessToken, refreshToken } = result as import("../lib/api/endpoints").AuthResponse;
+  async register(payload: RegisterPayload): Promise<User> {
+    const { user, accessToken, refreshToken } = await registerApi(payload);
     await tokens.set(accessToken, refreshToken);
     setState({ user, status: "ready" });
     return user;

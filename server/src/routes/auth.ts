@@ -11,13 +11,12 @@ import { requireAuth } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
+// El registro público es SOLO para reportadores.
+// Los jefes y operarios se crean directamente en la base de datos.
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(2),
-  role: z.enum(["reportador", "jefe", "operario"]),
-  department: z.enum(["mantenimiento", "it", "seguridad"]).optional(),
-  jobTitle: z.string().optional(),
   phone: z.string().optional(),
   legajo: z.string().optional(),
 });
@@ -28,13 +27,7 @@ authRouter.post("/register", async (req, res) => {
     res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
     return;
   }
-  const { email, password, name, role, ...rest } = parsed.data;
-
-  // Operarios deben seleccionar departamento
-  if (role === "operario" && !rest.department) {
-    res.status(400).json({ error: "Los operarios deben seleccionar un departamento" });
-    return;
-  }
+  const { email, password, name, ...rest } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -44,26 +37,17 @@ authRouter.post("/register", async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  // Operarios quedan pendientes hasta que el jefe los apruebe
-  const status = role === "operario" ? "pending" : "active";
-
   const user = await prisma.user.create({
     data: {
       email,
       passwordHash,
       name,
       initials: initialsFromName(name),
-      role,
-      status,
+      role: "reportador",
+      status: "active",
       ...rest,
     },
   });
-
-  if (status === "pending") {
-    // No emitimos tokens: el operario no puede loguearse hasta ser aprobado
-    res.status(202).json({ pending: true });
-    return;
-  }
 
   const accessToken = signAccessToken({ sub: user.id, role: user.role });
   const { token: refreshToken, expiresAt } = generateRefreshToken();
