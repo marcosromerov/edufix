@@ -204,6 +204,15 @@ incidentsRouter.patch("/:id", async (req, res) => {
         type: "assignment",
       },
     });
+    // Notify the assigned operario
+    await prisma.notification.create({
+      data: {
+        userId: parsed.data.assigneeId,
+        text: "Te asignaron una incidencia",
+        meta: `${updated.code} · ${updated.title}`,
+        type: "assignment",
+      },
+    });
   }
 
   res.json(updated);
